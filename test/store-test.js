@@ -17,14 +17,15 @@ describe("Store Contract", function () {
       hardhatStore = await Store.deploy();
     })
 
+  
+
     describe("Add Product", function () {
       it("Should add Product to the contract and check the adding result", async function () {
         const now = Math.floor(Date.now() / 1000);
      
-        console.log(addr1.address)
-        console.log(addr2.address)
-        console.log(addr3.address)
-        await hardhatStore.addProductToStore(
+        
+        
+        await hardhatStore.connect(owner).addProductToStore(
           'A', 'B', 'AA', 'BB', now, now + 10, 5, 0
         );
         const product = await hardhatStore.getProduct(1);
@@ -39,24 +40,32 @@ describe("Store Contract", function () {
         const prov = ethers.getDefaultProvider();
        
         expect(await hardhatStore.getProductNumber()).to.equal(1)
-        await hardhatStore.connect(addr1).bid(1, 
-          '6', 'test1', { value: 6 })
-        await hardhatStore.connect(addr2).bid(1, 
-          '7', 'test2', { value: 7 })
+        const q = await ethers.utils.parseEther("6")
+        const w = await ethers.utils.parseEther("7")
+        const e = await ethers.utils.parseEther("8")
+        const r = await ethers.utils.parseEther("9")
+        await hardhatStore.connect(addr1).bid(1, { value: q })
+        await hardhatStore.connect(addr2).bid(1, { value: w })
+        await hardhatStore.connect(addr1).bid(1, { value: e })
+        await hardhatStore.connect(addr2).bid(1, { value: r })
        
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
         }
         await sleep(10000);
-        await hardhatStore.connect(addr1).revealBid(1, '6', 'test1');
-        await hardhatStore.connect(addr2).revealBid(1, '7', 'test2');
         const a = await hardhatStore.higheatBidderInfo(1);
         expect(a[0]).to.equal(addr2.address)
-        expect(await hardhatStore.totalBids(1)).to.equal(2)
 
-        await hardhatStore.connect(addr3).finalizaAuction(1)
-        console.log(await hardhatStore.escrowAddressForProduct(1))
+        await hardhatStore.connect(owner).finalizaAuction(1)
+        //console.log(await hardhatStore.escrowAddressForProduct(1))
         // await hardhatStore.escrowInfo(1)
+        const b = await hardhatStore.getWinner(1)
+        expect(b[0]).to.equal(addr2.address)
+        expect(b[1]).to.equal(await ethers.utils.parseEther("9"))
+        let s = await ethers.provider.getBalance(addr1.address)
+        console.log(ethers.utils.formatEther(s))
+        s = await ethers.provider.getBalance(addr2.address)
+        console.log(ethers.utils.formatEther(s))
         console.log("Test is succeeful!")      
       
     })
